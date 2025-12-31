@@ -1,0 +1,5 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/kcssc869/public_html_2/
+    - /bin/cp -R build $DEPLOYPATH
+    - /bin/cp .htaccess $DEPLOYPATH
