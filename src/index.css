@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Calendar modifier styles for events and programs */
+.rdp-day[data-has-events],
+.rdp-day[data-has-programs] {
+  @apply bg-primary/20 text-primary font-semibold;
+}
+
+.rdp-day[data-has-events]:hover,
+.rdp-day[data-has-programs]:hover {
+  @apply bg-primary/30;
+}
+
+/* Alternative: if react-day-picker uses class-based modifiers */
+.rdp-day_hasEvents,
+.rdp-day_hasPrograms {
+  @apply bg-primary/20 text-primary font-semibold;
+}
+
+.rdp-day_hasEvents:hover,
+.rdp-day_hasPrograms:hover {
+  @apply bg-primary/30;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    /* KCSSC Brand Colors - Warm, welcoming, accessible */
+    --background: 40 30% 98%;
+    --foreground: 0 0% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    /* Deep warm red - primary brand color */
+    --primary: 350 75% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Warm gold/yellow accent */
+    --accent: 42 95% 55%;
+    --accent-foreground: 0 0% 12%;
+
+    /* Softer secondary */
+    --secondary: 40 25% 94%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 40 20% 92%;
+    --muted-foreground: 0 0% 40%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 88%;
+    --input: 40 20% 88%;
+    --ring: 350 75% 38%;
+
+    --radius: 0.75rem;
+
+    /* Custom KCSSC tokens */
+    --kcssc-red: 350 75% 38%;
+    --kcssc-red-light: 350 60% 95%;
+    --kcssc-gold: 42 95% 55%;
+    --kcssc-gold-light: 42 80% 92%;
+    --kcssc-cream: 40 30% 98%;
+    --kcssc-warm-gray: 30 10% 45%;
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.08);
+    --shadow-card: 0 8px 30px -8px hsl(0 0% 0% / 0.1);
+    --shadow-glow: 0 0 40px hsl(var(--kcssc-gold) / 0.3);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 40 20% 95%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 40 20% 95%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 40 20% 95%;
+
+    --primary: 350 70% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 42 90% 60%;
+    --accent-foreground: 0 0% 8%;
+
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 40 20% 95%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 40 10% 60%;
+
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 350 70% 50%;
+
+    --kcssc-red: 350 70% 50%;
+    --kcssc-red-light: 350 40% 20%;
+    --kcssc-gold: 42 90% 60%;
+    --kcssc-gold-light: 42 60% 20%;
+    --kcssc-cream: 0 0% 8%;
+    --kcssc-warm-gray: 30 10% 60%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-nunito antialiased;
+    font-size: 18px;
+    line-height: 1.7;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+
+  p {
+    @apply text-lg leading-relaxed;
+  }
+
+  /* Focus states for accessibility */
+  a:focus-visible,
+  button:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  .container-kcssc {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-padding {
+    @apply py-16 md:py-24;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-card hover:-translate-y-1;
+  }
+
+  .btn-large {
+    @apply px-8 py-4 text-lg font-semibold rounded-xl;
+  }
+
+  .link-underline {
+    @apply relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in-delay-1 {
+    animation: fadeIn 0.6s ease-out 0.1s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in-delay-2 {
+    animation: fadeIn 0.6s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in-delay-3 {
+    animation: fadeIn 0.6s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
