@@ -3,7 +3,7 @@
 
 import dotenv from 'dotenv';
 import { resolve } from 'path';
-import { query, pool, closeDatabase } from './connection';
+import { query, pool, closeDatabase } from './connection.js';
 
 // Load .env
 dotenv.config({ path: resolve(process.cwd(), '.env') });

@@ -13,21 +13,15 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Save, X, Trash2, Plus, Loader2, Edit, LogOut, Image as ImageIcon, Upload } from "lucide-react";
 import { fetchPhotos, createPhoto, updatePhoto, deletePhoto, uploadPhoto, type Photo } from "@/lib/api-service";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AdminPhotos() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
-  // Check authentication
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem("admin_authenticated") === "true";
-    if (!isAuthenticated) {
-      navigate("/admin/login");
-    }
-  }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("admin_authenticated");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/admin/login");
   };
 

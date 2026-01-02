@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Save, X, Trash2, Plus, Loader2, Edit, LogOut } from "lucide-react";
 import { fetchPrograms, createProgram, updateProgram, deleteProgram, type Program } from "@/lib/api-service";
+import { useAuth } from "@/lib/auth-context";
 
 const categories = ["Arts & Crafts", "Health & Wellness", "Music & Dance", "Language & Learning", "Social & Dining", "Fitness Programs"];
 const ageGroups = ["All Ages", "55+", "65+"];
@@ -20,9 +21,10 @@ const icons = ["Palette", "Heart", "Music", "BookOpen", "Utensils", "Dumbbell"];
 export default function AdminPrograms() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_authenticated");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/admin/login");
   };
   const [programs, setPrograms] = useState<Program[]>([]);

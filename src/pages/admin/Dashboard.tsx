@@ -5,12 +5,14 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Users, Settings, Plus, Edit, Trash2, LogOut, Image } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_authenticated");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/admin/login");
   };
 

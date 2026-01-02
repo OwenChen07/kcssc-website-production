@@ -9,9 +9,9 @@ The official website for the Kanata Chinese Seniors Support Centre, built with m
 - **Styling**: Tailwind CSS
 - **UI Components**: shadcn/ui (Radix UI)
 - **Routing**: React Router v6
-- **Backend**: Express.js
-- **Database**: PostgreSQL
+- **Database**: Supabase (PostgreSQL)
 - **State Management**: TanStack Query
+- **Backend**: Express.js (optional - can run as static site)
 
 ## Getting Started
 
@@ -38,17 +38,19 @@ cp .env.example .env
 ### Development
 
 ```bash
-# Run frontend only
+# Run frontend only (uses Supabase client or mock data)
 npm run dev
 
-# Run both frontend and backend
+# Run both frontend and backend (legacy mode)
 npm run dev:all
 
-# Run backend server only
+# Run backend server only (legacy mode)
 npm run server:dev
 ```
 
 The frontend will be available at `http://localhost:8080`
+
+**Note**: The site can now run as a static site using Supabase directly (no server required). See [SETUP_SUPABASE.md](SETUP_SUPABASE.md) for setup instructions.
 
 ### Database Setup
 
@@ -109,9 +111,11 @@ npm run server:start:prod
 
 ## Documentation
 
-- [Setup Guide](SETUP.md)
+- **[Quick Setup with Supabase](SETUP_SUPABASE.md)** ⭐ - Get started in 5 minutes
+- [Supabase Client Migration Guide](SUPABASE_CLIENT_MIGRATION.md) - Detailed migration instructions
+- [Setup Guide](SETUP.md) - Legacy setup with Express server
 - [Database Integration](DATABASE_INTEGRATION.md)
-- [Supabase Setup](SUPABASE_SETUP.md)
+- [Supabase Setup](SUPABASE_SETUP.md) - Legacy server-based Supabase setup
 - [Supabase Quickstart](SUPABASE_QUICKSTART.md)
 - [Troubleshooting](SUPABASE_TROUBLESHOOTING.md)
 

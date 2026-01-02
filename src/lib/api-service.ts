@@ -1,10 +1,11 @@
-// API service layer for database communication
-// Supports both mock data (development) and real API (production)
+// API service layer using Supabase client directly
+// Supports both mock data (development) and Supabase (production)
 
 import type { Event, Program } from './data-service';
+import { supabase, TABLES, STORAGE_BUCKET } from './supabase-client';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const USE_MOCK_DATA = import.meta.env.VITE_USE_MOCK_DATA !== 'false'; // Default to true if not set
+const SUPABASE_ENABLED = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 // Import mock API functions as fallback
 import { fetchEvents as fetchMockEvents, fetchEventById as fetchMockEventById } from './mock-api';
@@ -26,24 +27,131 @@ function isCacheValid<T>(cache: CacheEntry<T> | null): boolean {
   return (now - cache.timestamp) < CACHE_DURATION;
 }
 
-// Helper function for API requests
-async function apiRequest<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
+// ==================== Helper Functions ====================
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
+// Format date for display (converts "2025-01-25" to "January 25, 2025")
+function formatDateForDisplay(date: string): string {
+  const d = new Date(date);
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// Format time for display (converts "10:00:00" to "10:00 AM")
+function formatTime(time: string, endTime?: string | null): string {
+  const formatTime = (t: string) => {
+    // Handle both "HH:MM:SS" and "HH:MM" formats
+    const parts = t.split(':');
+    const hour = parseInt(parts[0]);
+    const minutes = parts[1] || '00';
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  if (endTime) {
+    return `${formatTime(time)} - ${formatTime(endTime)}`;
   }
+  return formatTime(time);
+}
 
-  return response.json();
+// Parse time from display format to database format ("10:00 AM" -> "10:00:00")
+function parseTime(timeStr: string): string {
+  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (match) {
+    let hours = parseInt(match[1]);
+    const minutes = match[2];
+    const ampm = match[3]?.toUpperCase();
+    
+    if (ampm === 'PM' && hours !== 12) hours += 12;
+    if (ampm === 'AM' && hours === 12) hours = 0;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}:00`;
+  }
+  return timeStr; // Assume already in HH:MM:SS format
+}
+
+// Parse date from display format to database format ("January 25, 2025" -> "2025-01-25")
+function parseDate(dateStr: string): string {
+  // If already in YYYY-MM-DD format, return as-is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+  
+  // Try to parse formatted date
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    return date.toISOString().split('T')[0];
+  }
+  
+  // Fallback: try to parse as-is
+  return dateStr;
+}
+
+// Transform database row to Event interface
+function transformEventRow(row: any): Event {
+  return {
+    id: row.id,
+    title: row.title,
+    date: formatDateForDisplay(row.date),
+    time: formatTime(row.time, row.end_time),
+    location: row.location,
+    category: row.category,
+    description: row.description || '',
+    featured: row.featured || false,
+    imageUrl: row.image_url || undefined,
+  };
+}
+
+// Transform Event interface to database row
+function transformEventToRow(event: Partial<Event>): any {
+  const row: any = {};
+  if (event.title !== undefined) row.title = event.title;
+  if (event.date !== undefined) row.date = parseDate(event.date);
+  if (event.time !== undefined) {
+    const timeParts = event.time.split(' - ');
+    row.time = parseTime(timeParts[0]);
+    if (timeParts[1]) {
+      row.end_time = parseTime(timeParts[1]);
+    }
+  }
+  if (event.location !== undefined) row.location = event.location;
+  if (event.category !== undefined) row.category = event.category;
+  if (event.description !== undefined) row.description = event.description;
+  if (event.featured !== undefined) row.featured = event.featured;
+  if (event.imageUrl !== undefined) row.image_url = event.imageUrl || null;
+  return row;
+}
+
+// Transform database row to Program interface
+function transformProgramRow(row: any): Program {
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    icon: row.icon,
+    schedule: row.schedule,
+    ageGroup: row.age_group,
+    description: row.description || '',
+    spots: row.spots || '',
+    imageUrl: row.image_url || undefined,
+  };
+}
+
+// Transform Program interface to database row
+function transformProgramToRow(program: Partial<Program>): any {
+  const row: any = {};
+  if (program.title !== undefined) row.title = program.title;
+  if (program.category !== undefined) row.category = program.category;
+  if (program.icon !== undefined) row.icon = program.icon;
+  if (program.schedule !== undefined) row.schedule = program.schedule;
+  if (program.ageGroup !== undefined) row.age_group = program.ageGroup;
+  if (program.description !== undefined) row.description = program.description;
+  if (program.spots !== undefined) row.spots = program.spots || null;
+  if (program.imageUrl !== undefined) row.image_url = program.imageUrl || null;
+  return row;
 }
 
 // ==================== Events API ====================
@@ -59,24 +167,27 @@ export async function fetchEvents(useCache = true): Promise<Event[]> {
     return eventsCache!.data;
   }
 
-  // Use mock data if no API URL is configured or if explicitly enabled
-  if (USE_MOCK_DATA || !API_BASE_URL) {
+  // Use mock data if enabled or if Supabase is not configured
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     const events = await fetchMockEvents();
     eventsCache = { data: events, timestamp: Date.now() };
     return events;
   }
 
   try {
-    // Build query parameters
-    const params = new URLSearchParams();
-    // Add any filter parameters here if needed
-    
-    const events = await apiRequest<Event[]>(`/events?${params.toString()}`);
+    const { data, error } = await supabase
+      .from(TABLES.EVENTS)
+      .select('*')
+      .order('date', { ascending: true })
+      .order('time', { ascending: true });
+
+    if (error) throw error;
+
+    const events = (data || []).map(transformEventRow);
     eventsCache = { data: events, timestamp: Date.now() };
     return events;
   } catch (error) {
-    console.error('Failed to fetch events from API, falling back to mock data:', error);
-    // Fallback to mock data on error
+    console.error('Failed to fetch events from Supabase, falling back to mock data:', error);
     const events = await fetchMockEvents();
     eventsCache = { data: events, timestamp: Date.now() };
     return events;
@@ -89,8 +200,8 @@ export async function fetchEvents(useCache = true): Promise<Event[]> {
  * @returns Promise<Event>
  */
 export async function fetchEventById(id: number): Promise<Event> {
-  // Use mock data if no API URL is configured or if explicitly enabled
-  if (USE_MOCK_DATA || !API_BASE_URL) {
+  // Use mock data if enabled or if Supabase is not configured
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     const event = await fetchMockEventById(id);
     if (!event) {
       throw new Error(`Event with id ${id} not found`);
@@ -99,10 +210,18 @@ export async function fetchEventById(id: number): Promise<Event> {
   }
 
   try {
-    return await apiRequest<Event>(`/events/${id}`);
+    const { data, error } = await supabase
+      .from(TABLES.EVENTS)
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error(`Event with id ${id} not found`);
+
+    return transformEventRow(data);
   } catch (error) {
-    console.error(`Failed to fetch event ${id} from API, falling back to mock data:`, error);
-    // Fallback to mock data on error
+    console.error(`Failed to fetch event ${id} from Supabase, falling back to mock data:`, error);
     const event = await fetchMockEventById(id);
     if (!event) {
       throw new Error(`Event with id ${id} not found`);
@@ -117,24 +236,23 @@ export async function fetchEventById(id: number): Promise<Event> {
  * @returns Promise<Event>
  */
 export async function createEvent(event: Omit<Event, 'id'>): Promise<Event> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot create events with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot create events with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/events`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(event),
-    });
+    const row = transformEventToRow(event);
+    
+    const { data, error } = await supabase
+      .from(TABLES.EVENTS)
+      .insert(row)
+      .select()
+      .single();
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create event');
-    }
+    if (error) throw error;
 
-    clearEventsCache(); // Clear cache after creating
-    return response.json();
+    clearEventsCache();
+    return transformEventRow(data);
   } catch (error) {
     console.error('Error creating event:', error);
     throw error;
@@ -148,24 +266,25 @@ export async function createEvent(event: Omit<Event, 'id'>): Promise<Event> {
  * @returns Promise<Event>
  */
 export async function updateEvent(id: number, event: Partial<Event>): Promise<Event> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot update events with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot update events with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/events/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(event),
-    });
+    const row = transformEventToRow(event);
+    
+    const { data, error } = await supabase
+      .from(TABLES.EVENTS)
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to update event');
-    }
+    if (error) throw error;
+    if (!data) throw new Error(`Event with id ${id} not found`);
 
-    clearEventsCache(); // Clear cache after updating
-    return response.json();
+    clearEventsCache();
+    return transformEventRow(data);
   } catch (error) {
     console.error('Error updating event:', error);
     throw error;
@@ -178,21 +297,19 @@ export async function updateEvent(id: number, event: Partial<Event>): Promise<Ev
  * @returns Promise<void>
  */
 export async function deleteEvent(id: number): Promise<void> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot delete events with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot delete events with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/events/${id}`, {
-      method: 'DELETE',
-    });
+    const { error } = await supabase
+      .from(TABLES.EVENTS)
+      .delete()
+      .eq('id', id);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete event');
-    }
+    if (error) throw error;
 
-    clearEventsCache(); // Clear cache after deleting
+    clearEventsCache();
   } catch (error) {
     console.error('Error deleting event:', error);
     throw error;
@@ -212,29 +329,40 @@ export interface EventFilters {
 }
 
 export async function fetchEventsWithFilters(filters: EventFilters): Promise<Event[]> {
-  // Use mock data if no API URL is configured or if explicitly enabled
-  if (USE_MOCK_DATA || !API_BASE_URL) {
+  // Use mock data if enabled or if Supabase is not configured
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     const allEvents = await fetchMockEvents();
     // Apply filters client-side
     return allEvents.filter(event => {
       if (filters.category && event.category !== filters.category) return false;
       if (filters.featured !== undefined && event.featured !== filters.featured) return false;
-      // Date filtering would require parsing dates - simplified for now
       return true;
     });
   }
 
   try {
-    const params = new URLSearchParams();
-    if (filters.category) params.append('category', filters.category);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
-    if (filters.featured !== undefined) params.append('featured', String(filters.featured));
+    let query = supabase.from(TABLES.EVENTS).select('*');
 
-    return await apiRequest<Event[]>(`/events?${params.toString()}`);
+    if (filters.category) {
+      query = query.eq('category', filters.category);
+    }
+    if (filters.startDate) {
+      query = query.gte('date', parseDate(filters.startDate));
+    }
+    if (filters.endDate) {
+      query = query.lte('date', parseDate(filters.endDate));
+    }
+    if (filters.featured !== undefined) {
+      query = query.eq('featured', filters.featured);
+    }
+
+    const { data, error } = await query.order('date', { ascending: true }).order('time', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []).map(transformEventRow);
   } catch (error) {
-    console.error('Failed to fetch filtered events from API, falling back to mock data:', error);
-    // Fallback to mock data on error
+    console.error('Failed to fetch filtered events from Supabase, falling back to mock data:', error);
     const allEvents = await fetchMockEvents();
     return allEvents.filter(event => {
       if (filters.category && event.category !== filters.category) return false;
@@ -257,9 +385,8 @@ export async function fetchPrograms(useCache = true): Promise<Program[]> {
     return programsCache!.data;
   }
 
-  // Use mock data if no API URL is configured or if explicitly enabled
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    // Import mock programs data
+  // Use mock data if enabled or if Supabase is not configured
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     const { fetchPrograms: fetchMockPrograms } = await import('./mock-api');
     const programs = await fetchMockPrograms();
     programsCache = { data: programs, timestamp: Date.now() };
@@ -267,12 +394,18 @@ export async function fetchPrograms(useCache = true): Promise<Program[]> {
   }
 
   try {
-    const programs = await apiRequest<Program[]>(`/programs`);
+    const { data, error } = await supabase
+      .from(TABLES.PROGRAMS)
+      .select('*')
+      .order('title', { ascending: true });
+
+    if (error) throw error;
+
+    const programs = (data || []).map(transformProgramRow);
     programsCache = { data: programs, timestamp: Date.now() };
     return programs;
   } catch (error) {
-    console.error('Failed to fetch programs from API, falling back to mock data:', error);
-    // Fallback to mock data on error
+    console.error('Failed to fetch programs from Supabase, falling back to mock data:', error);
     const { fetchPrograms: fetchMockPrograms } = await import('./mock-api');
     const programs = await fetchMockPrograms();
     programsCache = { data: programs, timestamp: Date.now() };
@@ -286,8 +419,8 @@ export async function fetchPrograms(useCache = true): Promise<Program[]> {
  * @returns Promise<Program>
  */
 export async function fetchProgramById(id: number): Promise<Program> {
-  // Use mock data if no API URL is configured or if explicitly enabled
-  if (USE_MOCK_DATA || !API_BASE_URL) {
+  // Use mock data if enabled or if Supabase is not configured
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     const { fetchProgramById: fetchMockProgramById } = await import('./mock-api');
     const program = await fetchMockProgramById(id);
     if (!program) {
@@ -297,10 +430,18 @@ export async function fetchProgramById(id: number): Promise<Program> {
   }
 
   try {
-    return await apiRequest<Program>(`/programs/${id}`);
+    const { data, error } = await supabase
+      .from(TABLES.PROGRAMS)
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) throw new Error(`Program with id ${id} not found`);
+
+    return transformProgramRow(data);
   } catch (error) {
-    console.error(`Failed to fetch program ${id} from API, falling back to mock data:`, error);
-    // Fallback to mock data on error
+    console.error(`Failed to fetch program ${id} from Supabase, falling back to mock data:`, error);
     const { fetchProgramById: fetchMockProgramById } = await import('./mock-api');
     const program = await fetchMockProgramById(id);
     if (!program) {
@@ -316,24 +457,23 @@ export async function fetchProgramById(id: number): Promise<Program> {
  * @returns Promise<Program>
  */
 export async function createProgram(program: Omit<Program, 'id'>): Promise<Program> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot create programs with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot create programs with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/programs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(program),
-    });
+    const row = transformProgramToRow(program);
+    
+    const { data, error } = await supabase
+      .from(TABLES.PROGRAMS)
+      .insert(row)
+      .select()
+      .single();
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create program');
-    }
+    if (error) throw error;
 
-    clearProgramsCache(); // Clear cache after creating
-    return response.json();
+    clearProgramsCache();
+    return transformProgramRow(data);
   } catch (error) {
     console.error('Error creating program:', error);
     throw error;
@@ -347,24 +487,25 @@ export async function createProgram(program: Omit<Program, 'id'>): Promise<Progr
  * @returns Promise<Program>
  */
 export async function updateProgram(id: number, program: Partial<Program>): Promise<Program> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot update programs with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot update programs with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/programs/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(program),
-    });
+    const row = transformProgramToRow(program);
+    
+    const { data, error } = await supabase
+      .from(TABLES.PROGRAMS)
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to update program');
-    }
+    if (error) throw error;
+    if (!data) throw new Error(`Program with id ${id} not found`);
 
-    clearProgramsCache(); // Clear cache after updating
-    return response.json();
+    clearProgramsCache();
+    return transformProgramRow(data);
   } catch (error) {
     console.error('Error updating program:', error);
     throw error;
@@ -377,21 +518,19 @@ export async function updateProgram(id: number, program: Partial<Program>): Prom
  * @returns Promise<void>
  */
 export async function deleteProgram(id: number): Promise<void> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot delete programs with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot delete programs with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/programs/${id}`, {
-      method: 'DELETE',
-    });
+    const { error } = await supabase
+      .from(TABLES.PROGRAMS)
+      .delete()
+      .eq('id', id);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete program');
-    }
+    if (error) throw error;
 
-    clearProgramsCache(); // Clear cache after deleting
+    clearProgramsCache();
   } catch (error) {
     console.error('Error deleting program:', error);
     throw error;
@@ -409,11 +548,10 @@ export interface ProgramFilters {
 }
 
 export async function fetchProgramsWithFilters(filters: ProgramFilters): Promise<Program[]> {
-  // Use mock data if no API URL is configured or if explicitly enabled
-  if (USE_MOCK_DATA || !API_BASE_URL) {
+  // Use mock data if enabled or if Supabase is not configured
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     const { fetchPrograms: fetchMockPrograms } = await import('./mock-api');
     const allPrograms = await fetchMockPrograms();
-    // Apply filters client-side
     return allPrograms.filter(program => {
       if (filters.category && program.category !== filters.category) return false;
       if (filters.ageGroup && program.ageGroup !== filters.ageGroup) return false;
@@ -422,14 +560,22 @@ export async function fetchProgramsWithFilters(filters: ProgramFilters): Promise
   }
 
   try {
-    const params = new URLSearchParams();
-    if (filters.category) params.append('category', filters.category);
-    if (filters.ageGroup) params.append('ageGroup', filters.ageGroup);
+    let query = supabase.from(TABLES.PROGRAMS).select('*');
 
-    return await apiRequest<Program[]>(`/programs?${params.toString()}`);
+    if (filters.category) {
+      query = query.eq('category', filters.category);
+    }
+    if (filters.ageGroup) {
+      query = query.eq('age_group', filters.ageGroup);
+    }
+
+    const { data, error } = await query.order('title', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []).map(transformProgramRow);
   } catch (error) {
-    console.error('Failed to fetch filtered programs from API, falling back to mock data:', error);
-    // Fallback to mock data on error
+    console.error('Failed to fetch filtered programs from Supabase, falling back to mock data:', error);
     const { fetchPrograms: fetchMockPrograms } = await import('./mock-api');
     const allPrograms = await fetchMockPrograms();
     return allPrograms.filter(program => {
@@ -489,20 +635,35 @@ export async function fetchPhotos(useCache = true): Promise<Photo[]> {
     return photosCache!.data;
   }
 
-  // Use mock data if no API URL is configured or if explicitly enabled
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    // Return empty array for now - can add mock photos later if needed
+  // Use mock data if enabled or if Supabase is not configured
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     const photos: Photo[] = [];
     photosCache = { data: photos, timestamp: Date.now() };
     return photos;
   }
 
   try {
-    const photos = await apiRequest<Photo[]>(`/photos`);
+    const { data, error } = await supabase
+      .from(TABLES.PHOTOS)
+      .select('*')
+      .order('date', { ascending: false })
+      .order('id', { ascending: false });
+
+    if (error) throw error;
+
+    const photos = (data || []).map((row: any) => ({
+      id: row.id,
+      photo: row.photo,
+      description: row.description || undefined,
+      event: row.event,
+      date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
+      favourite: row.favourite || false,
+    }));
+
     photosCache = { data: photos, timestamp: Date.now() };
     return photos;
   } catch (error) {
-    console.error('Failed to fetch photos from API:', error);
+    console.error('Failed to fetch photos from Supabase:', error);
     const photos: Photo[] = [];
     photosCache = { data: photos, timestamp: Date.now() };
     return photos;
@@ -514,14 +675,29 @@ export async function fetchPhotos(useCache = true): Promise<Photo[]> {
  * @returns Promise<Photo[]>
  */
 export async function fetchFavouritePhotos(): Promise<Photo[]> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     return [];
   }
 
   try {
-    return await apiRequest<Photo[]>(`/photos?favourite=true`);
+    const { data, error } = await supabase
+      .from(TABLES.PHOTOS)
+      .select('*')
+      .eq('favourite', true)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      photo: row.photo,
+      description: row.description || undefined,
+      event: row.event,
+      date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
+      favourite: row.favourite || false,
+    }));
   } catch (error) {
-    console.error('Failed to fetch favourite photos from API:', error);
+    console.error('Failed to fetch favourite photos from Supabase:', error);
     return [];
   }
 }
@@ -532,14 +708,33 @@ export async function fetchFavouritePhotos(): Promise<Photo[]> {
  * @returns Promise<Photo[]>
  */
 export async function fetchPhotosByYear(year: number): Promise<Photo[]> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     return [];
   }
 
   try {
-    return await apiRequest<Photo[]>(`/photos?year=${year}`);
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    const { data, error } = await supabase
+      .from(TABLES.PHOTOS)
+      .select('*')
+      .gte('date', startDate)
+      .lte('date', endDate)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      photo: row.photo,
+      description: row.description || undefined,
+      event: row.event,
+      date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
+      favourite: row.favourite || false,
+    }));
   } catch (error) {
-    console.error(`Failed to fetch photos for year ${year} from API:`, error);
+    console.error(`Failed to fetch photos for year ${year} from Supabase:`, error);
     return [];
   }
 }
@@ -550,14 +745,29 @@ export async function fetchPhotosByYear(year: number): Promise<Photo[]> {
  * @returns Promise<Photo[]>
  */
 export async function fetchPhotosByEvent(event: string): Promise<Photo[]> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
     return [];
   }
 
   try {
-    return await apiRequest<Photo[]>(`/photos?event=${encodeURIComponent(event)}`);
+    const { data, error } = await supabase
+      .from(TABLES.PHOTOS)
+      .select('*')
+      .eq('event', event)
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      photo: row.photo,
+      description: row.description || undefined,
+      event: row.event,
+      date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
+      favourite: row.favourite || false,
+    }));
   } catch (error) {
-    console.error(`Failed to fetch photos for event ${event} from API:`, error);
+    console.error(`Failed to fetch photos for event ${event} from Supabase:`, error);
     return [];
   }
 }
@@ -568,24 +778,34 @@ export async function fetchPhotosByEvent(event: string): Promise<Photo[]> {
  * @returns Promise<Photo>
  */
 export async function createPhoto(photo: Omit<Photo, 'id'>): Promise<Photo> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot create photos with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot create photos with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/photos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(photo),
-    });
+    const { data, error } = await supabase
+      .from(TABLES.PHOTOS)
+      .insert({
+        photo: photo.photo,
+        description: photo.description || null,
+        event: photo.event,
+        date: photo.date,
+        favourite: photo.favourite || false,
+      })
+      .select()
+      .single();
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to create photo');
-    }
+    if (error) throw error;
 
-    photosCache = null; // Clear cache after creating
-    return response.json();
+    photosCache = null;
+    return {
+      id: data.id,
+      photo: data.photo,
+      description: data.description || undefined,
+      event: data.event,
+      date: data.date ? new Date(data.date).toISOString().split('T')[0] : '',
+      favourite: data.favourite || false,
+    };
   } catch (error) {
     console.error('Error creating photo:', error);
     throw error;
@@ -599,24 +819,37 @@ export async function createPhoto(photo: Omit<Photo, 'id'>): Promise<Photo> {
  * @returns Promise<Photo>
  */
 export async function updatePhoto(id: number, photo: Partial<Photo>): Promise<Photo> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot update photos with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot update photos with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/photos/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(photo),
-    });
+    const updates: any = {};
+    if (photo.photo !== undefined) updates.photo = photo.photo;
+    if (photo.description !== undefined) updates.description = photo.description || null;
+    if (photo.event !== undefined) updates.event = photo.event;
+    if (photo.date !== undefined) updates.date = photo.date;
+    if (photo.favourite !== undefined) updates.favourite = photo.favourite;
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to update photo');
-    }
+    const { data, error } = await supabase
+      .from(TABLES.PHOTOS)
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
 
-    photosCache = null; // Clear cache after updating
-    return response.json();
+    if (error) throw error;
+    if (!data) throw new Error(`Photo with id ${id} not found`);
+
+    photosCache = null;
+    return {
+      id: data.id,
+      photo: data.photo,
+      description: data.description || undefined,
+      event: data.event,
+      date: data.date ? new Date(data.date).toISOString().split('T')[0] : '',
+      favourite: data.favourite || false,
+    };
   } catch (error) {
     console.error('Error updating photo:', error);
     throw error;
@@ -629,21 +862,19 @@ export async function updatePhoto(id: number, photo: Partial<Photo>): Promise<Ph
  * @returns Promise<void>
  */
 export async function deletePhoto(id: number): Promise<void> {
-  if (USE_MOCK_DATA || !API_BASE_URL) {
-    throw new Error('Cannot delete photos with mock data. Set VITE_USE_MOCK_DATA=false and VITE_API_BASE_URL');
+  if (USE_MOCK_DATA || !SUPABASE_ENABLED) {
+    throw new Error('Cannot delete photos with mock data. Configure Supabase or set VITE_USE_MOCK_DATA=false');
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/photos/${id}`, {
-      method: 'DELETE',
-    });
+    const { error } = await supabase
+      .from(TABLES.PHOTOS)
+      .delete()
+      .eq('id', id);
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete photo');
-    }
+    if (error) throw error;
 
-    photosCache = null; // Clear cache after deleting
+    photosCache = null;
   } catch (error) {
     console.error('Error deleting photo:', error);
     throw error;
@@ -658,36 +889,46 @@ export function clearPhotosCache(): void {
 }
 
 /**
- * Upload a photo file
+ * Upload a photo file to Supabase Storage
  * @param file - File object from input
- * @returns Promise with file path
+ * @returns Promise with file URL
  */
 export async function uploadPhoto(file: File): Promise<string> {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-  
-  if (!API_BASE_URL) {
-    throw new Error('API base URL not configured. Set VITE_API_BASE_URL');
+  if (!SUPABASE_ENABLED) {
+    throw new Error('Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
   }
 
-  const formData = new FormData();
-  formData.append('photo', file);
-
   try {
-    const response = await fetch(`${API_BASE_URL}/upload/photo`, {
-      method: 'POST',
-      body: formData,
-    });
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomSuffix = Math.round(Math.random() * 1E9);
+    const ext = file.name.split('.').pop();
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+    const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9]/g, '-');
+    const fileName = `${sanitizedName}-${timestamp}-${randomSuffix}.${ext}`;
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to upload photo');
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(fileName);
+
+    if (!urlData?.publicUrl) {
+      throw new Error('Failed to get public URL for uploaded file');
     }
 
-    const result = await response.json();
-    return result.filePath;
+    return urlData.publicUrl;
   } catch (error) {
-    console.error('Error uploading photo:', error);
+    console.error('Error uploading photo to Supabase Storage:', error);
     throw error;
   }
 }
-

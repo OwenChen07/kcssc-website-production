@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,22 +6,41 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Loader2 } from "lucide-react";
-
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "kcsscadmin";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { user, loading, signIn } = useAuth();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if already authenticated
-  const isAuthenticated = localStorage.getItem("admin_authenticated") === "true";
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!loading && user && location.pathname === "/admin/login") {
+      navigate("/admin", { replace: true });
+    }
+  }, [user, loading, navigate, location.pathname]);
 
-  // If already authenticated, redirect to admin dashboard
-  if (isAuthenticated && location.pathname === "/admin/login") {
-    navigate("/admin", { replace: true });
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-kcssc-red p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Don't show login form if already authenticated (will redirect)
+  if (user) {
     return null;
   }
 
@@ -29,29 +48,36 @@ export default function AdminLogin() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simple password check
-    if (password === ADMIN_PASSWORD) {
-      // Set authentication in localStorage
-      localStorage.setItem("admin_authenticated", "true");
-      
-      toast({
-        title: "Success",
-        description: "Login successful",
-      });
+    try {
+      const { error } = await signIn(email, password);
 
-      // Redirect to admin dashboard or the page they were trying to access
-      const from = location.state?.from?.pathname || "/admin";
-      navigate(from, { replace: true });
-    } else {
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Incorrect email or password",
+          variant: "destructive",
+        });
+        setPassword("");
+      } else {
+        toast({
+          title: "Success",
+          description: "Login successful",
+        });
+
+        // Redirect to admin dashboard or the page they were trying to access
+        const from = (location.state as any)?.from?.pathname || "/admin";
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Incorrect password",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
       setPassword("");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -65,11 +91,24 @@ export default function AdminLogin() {
           </div>
           <CardTitle className="text-2xl">Admin Login</CardTitle>
           <CardDescription>
-            Enter your password to access the admin panel
+            Enter your email and password to access the admin panel
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@kcssc.ca"
+                required
+                autoFocus
+                disabled={isLoading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -77,9 +116,8 @@ export default function AdminLogin() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
+                placeholder="Enter your password"
                 required
-                autoFocus
                 disabled={isLoading}
               />
             </div>
@@ -102,5 +140,3 @@ export default function AdminLogin() {
     </div>
   );
 }
-
-

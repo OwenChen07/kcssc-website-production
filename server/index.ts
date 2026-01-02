@@ -31,11 +31,11 @@ if (result.error) {
 // NOW import other modules (they will have access to loaded env vars)
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
-import { initializeDatabase } from './db/connection';
-import eventsRouter from './routes/events';
-import programsRouter from './routes/programs';
-import photosRouter from './routes/photos';
-import uploadRouter from './routes/upload';
+import { initializeDatabase } from './db/connection.js';
+import eventsRouter from './routes/events.js';
+import programsRouter from './routes/programs.js';
+import photosRouter from './routes/photos.js';
+import uploadRouter from './routes/upload.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -99,14 +99,14 @@ startServer();
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM signal received: closing HTTP server');
-  const { closeDatabase } = await import('./db/connection');
+  const { closeDatabase } = await import('./db/connection.js');
   await closeDatabase();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('SIGINT signal received: closing HTTP server');
-  const { closeDatabase } = await import('./db/connection');
+  const { closeDatabase } = await import('./db/connection.js');
   await closeDatabase();
   process.exit(0);
 });

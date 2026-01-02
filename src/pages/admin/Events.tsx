@@ -14,15 +14,17 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Save, X, Trash2, Plus, Loader2, Edit, LogOut } from "lucide-react";
 import { fetchEvents, createEvent, updateEvent, deleteEvent, type Event } from "@/lib/api-service";
+import { useAuth } from "@/lib/auth-context";
 
 const categories = ["Holiday", "Health", "Arts", "Fitness", "Cooking", "Learning", "Social"];
 
 export default function AdminEvents() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin_authenticated");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/admin/login");
   };
   const [events, setEvents] = useState<Event[]>([]);
