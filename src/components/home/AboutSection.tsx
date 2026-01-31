@@ -50,7 +50,7 @@ export function AboutSection() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           {/* <p className="text-accent font-semibold text-2xl mb-3">About Us</p> */}
-          <h2 className="text-foreground mb-6 text-[#850221]">Building Community, Celebrating Culture</h2>
+          <h2 className="text-foreground mb-6 text-[#850221]">Building Community, Celebrating Culture!</h2>
           <p className="text-muted-foreground text-xl">
             For nearly two decades, KCSSC has been a cornerstone of support for Chinese seniors in Kanata, providing programs, services, and a welcoming space to connect.
           </p>
