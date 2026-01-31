@@ -43,7 +43,6 @@ const communityImages = [
 
 export function AboutSection() {
   const [selectedImage, setSelectedImage] = useState<typeof communityImages[0] | null>(null);
-
   return (
     <section className="section-padding bg-background">
       <div className="container-kcssc">
