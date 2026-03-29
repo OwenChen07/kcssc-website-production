@@ -74,3 +74,5 @@ echo ""
 echo "Look for the paths above and update nginx.conf.example accordingly."
 
 
+
+

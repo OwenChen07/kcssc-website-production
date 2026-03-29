@@ -1,0 +1,37 @@
+{
+  "common": {
+    "viewEvents": "查看活动",
+    "joinCommunity": "加入我们的社区",
+    "servingSince": "自2011年以来为社区服务",
+    "donate": "捐赠",
+    "contactUs": "联系我们"
+  },
+  "home": {
+    "title": "卡纳塔华人长者支持中心",
+    "subtitle": "通过社区、文化和关怀丰富生活。与我们一起为卡纳塔的华人长者建立一个支持性环境。"
+  },
+  "navigation": {
+    "about": "关于我们",
+    "events": "活动",
+    "programs": "项目",
+    "gallery": "图库",
+    "supportUs": "支持我们",
+    "resources": "资源",
+    "contact": "联系方式",
+    "missionAndVision": "使命和愿景",
+    "missionAndVisionDesc": "我们为社区的目标和目的",
+    "history": "历史",
+    "historyDesc": "KCSSC如何开始和发展",
+    "boardOfDirectors": "董事会",
+    "boardOfDirectorsDesc": "认识我们的领导团队",
+    "resourcesTitle": "资源",
+    "resourcesDesc": "为长者提供有用的链接和信息",
+    "publications": "出版物",
+    "publicationsDesc": "通讯和文件",
+    "membershipsVolunteers": "会员和志愿者",
+    "membershipsVolunteersDesc": "加入我们的社区",
+    "fundersSponsorsPartners": "资助者、赞助商和合作伙伴",
+    "fundersSponsorsPartnersDesc": "我们的支持者"
+  }
+}
+

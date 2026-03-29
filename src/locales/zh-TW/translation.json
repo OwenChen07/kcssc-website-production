@@ -1,0 +1,37 @@
+{
+  "common": {
+    "viewEvents": "查看活動",
+    "joinCommunity": "加入我們的社區",
+    "servingSince": "自2011年以來為社區服務",
+    "donate": "捐贈",
+    "contactUs": "聯絡我們"
+  },
+  "home": {
+    "title": "卡納塔華人長者支持中心",
+    "subtitle": "通過社區、文化和關懷豐富生活。與我們一起為卡納塔的華人長者建立一個支持性環境。"
+  },
+  "navigation": {
+    "about": "關於我們",
+    "events": "活動",
+    "programs": "項目",
+    "gallery": "圖庫",
+    "supportUs": "支持我們",
+    "resources": "資源",
+    "contact": "聯絡方式",
+    "missionAndVision": "使命和願景",
+    "missionAndVisionDesc": "我們為社區的目標和目的",
+    "history": "歷史",
+    "historyDesc": "KCSSC如何開始和發展",
+    "boardOfDirectors": "董事會",
+    "boardOfDirectorsDesc": "認識我們的領導團隊",
+    "resourcesTitle": "資源",
+    "resourcesDesc": "為長者提供有用的鏈接和信息",
+    "publications": "出版物",
+    "publicationsDesc": "通訊和文件",
+    "membershipsVolunteers": "會員和志願者",
+    "membershipsVolunteersDesc": "加入我們的社區",
+    "fundersSponsorsPartners": "資助者、贊助商和合作夥伴",
+    "fundersSponsorsPartnersDesc": "我們的支持者"
+  }
+}
+

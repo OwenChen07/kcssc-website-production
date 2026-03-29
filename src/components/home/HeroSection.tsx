@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, Calendar, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function HeroSection() {
+  const { t } = useTranslation();
   return (
     <section className="relative overflow-hidden" style={{ background: 'linear-gradient(to bottom right, #830707, #F9FEBE)' }}>
       {/* Background image */}
@@ -25,30 +27,30 @@ export function HeroSection() {
           <div className="max-w-3xl">
             {/* Main heading */}
             <h1 className="text-primary-foreground mb-6 animate-fade-in-up whitespace-nowrap text-3xl md:text-4xl lg:text-3sxl xl:text-6xl">
-              Kanata Chinese Seniors Support Centre
+              {t("home.title")}
             </h1>
 
             {/* Subheading */}
             <p className="text-xl md:text-2xl text-primary-foreground/90 mb-10 leading-relaxed animate-fade-in-delay-1">
-              Enriching lives through community, culture, and care. Join us in building a supportive environment for Chinese seniors in Kanata.
+              {t("home.subtitle")}
             </p>
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm text-primary-foreground px-4 py-2 rounded-full text-sm font-medium mb-8 animate-fade-in">
               <Heart className="h-4 w-4 text-accent" />
-              <span>Serving our community since 2011</span>
+              <span>{t("common.servingSince")}</span>
             </div>
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in-delay-2">
               <Button asChild variant="accent" size="xl">
                 <Link to="/events">
                   <Calendar className="mr-2 h-5 w-5" />
-                  View Events
+                  {t("common.viewEvents")}
                 </Link>
               </Button>
               <Button asChild variant="hero-outline" size="xl">
                 <Link to="/support/membership">
                   <Users className="mr-2 h-5 w-5" />
-                  Join Our Community
+                  {t("common.joinCommunity")}
                 </Link>
               </Button>
             </div>

@@ -11,25 +11,28 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-
-const aboutLinks = [
-  { title: "Mission and Vision", href: "/about/mission", description: "Our purpose and goals for the community" },
-  { title: "History", href: "/about/history", description: "How KCSSC began and grew" },
-  { title: "Board of Directors", href: "/about/board", description: "Meet our leadership team" },
-];
-
-const resourcesLinks = [
-  { title: "Resources", href: "/resources", description: "Helpful links and information for seniors" },
-  { title: "Publications", href: "/archives/publications", description: "Newsletters and documents" },
-];
-
-const supportLinks = [
-  { title: "Memberships & Volunteers", href: "/support/membership", description: "Join our community" },
-  { title: "Funders, Sponsors & Partners", href: "/support/partners", description: "Our supporters" },
-];
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function Header() {
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const aboutLinks = [
+    { title: t("navigation.missionAndVision"), href: "/about/mission", description: t("navigation.missionAndVisionDesc") },
+    { title: t("navigation.history"), href: "/about/history", description: t("navigation.historyDesc") },
+    { title: t("navigation.boardOfDirectors"), href: "/about/board", description: t("navigation.boardOfDirectorsDesc") },
+  ];
+
+  const resourcesLinks = [
+    { title: t("navigation.resourcesTitle"), href: "/resources", description: t("navigation.resourcesDesc") },
+    { title: t("navigation.publications"), href: "/archives/publications", description: t("navigation.publicationsDesc") },
+  ];
+
+  const supportLinks = [
+    { title: t("navigation.membershipsVolunteers"), href: "/support/membership", description: t("navigation.membershipsVolunteersDesc") },
+    { title: t("navigation.fundersSponsorsPartners"), href: "/support/partners", description: t("navigation.fundersSponsorsPartnersDesc") },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#800000]/40 bg-white backdrop-blur supports-[backdrop-filter]:bg-white">
@@ -49,7 +52,7 @@ export function Header() {
           <NavigationMenu className="hidden lg:flex">
             <NavigationMenuList className="gap-1">
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">About</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">{t("navigation.about")}</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4">
                     {aboutLinks.map((link) => (
@@ -64,7 +67,7 @@ export function Header() {
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/events" className="group inline-flex h-12 w-max items-center justify-center rounded-lg px-4 text-base font-bold text-[#800000] transition-colors hover:bg-[#800000]/10 hover:text-[#800000] focus:bg-[#800000]/10 focus:text-[#800000] focus:outline-none">
-                    Events
+                    {t("navigation.events")}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -72,7 +75,7 @@ export function Header() {
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/programs" className="group inline-flex h-12 w-max items-center justify-center rounded-lg px-4 text-base font-bold text-[#800000] transition-colors hover:bg-[#800000]/10 hover:text-[#800000] focus:bg-[#800000]/10 focus:text-[#800000] focus:outline-none">
-                    Programs
+                    {t("navigation.programs")}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -80,13 +83,13 @@ export function Header() {
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/archives/gallery" className="group inline-flex h-12 w-max items-center justify-center rounded-lg px-4 text-base font-bold text-[#800000] transition-colors hover:bg-[#800000]/10 hover:text-[#800000] focus:bg-[#800000]/10 focus:text-[#800000] focus:outline-none">
-                    Gallery
+                    {t("navigation.gallery")}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">Support Us</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">{t("navigation.supportUs")}</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4">
                     {supportLinks.map((link) => (
@@ -99,7 +102,7 @@ export function Header() {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">Resources</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">{t("navigation.resources")}</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4">
                     {resourcesLinks.map((link) => (
@@ -114,17 +117,18 @@ export function Header() {
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <Link to="/contact" className="group inline-flex h-12 w-max items-center justify-center rounded-lg px-4 text-base font-bold text-[#800000] transition-colors hover:bg-[#800000]/10 hover:text-[#800000] focus:bg-[#800000]/10 focus:text-[#800000] focus:outline-none">
-                    Contact Us
+                    {t("navigation.contact")}
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
 
-          {/* Donate Button & Mobile Menu */}
+          {/* Donate Button, Language Switcher & Mobile Menu */}
           <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             <Button asChild className="hidden md:inline-flex">
-              <Link to="/donate">Donate</Link>
+              <Link to="/donate">{t("common.donate")}</Link>
             </Button>
 
             {/* Mobile menu button */}
@@ -144,14 +148,14 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-[#800000]/30 py-4 animate-fade-in">
             <nav className="flex flex-col gap-2">
-              <MobileNavGroup title="About" links={aboutLinks} />
-              <MobileNavLink href="/events">Events</MobileNavLink>
-              <MobileNavLink href="/programs">Programs</MobileNavLink>
-              <MobileNavLink href="/archives/gallery">Gallery</MobileNavLink>
-              <MobileNavGroup title="Support Us" links={supportLinks} />
-              <MobileNavGroup title="Resources" links={resourcesLinks} />
-              <MobileNavLink href="/contact">Contact Us</MobileNavLink>
-              <MobileNavLink href="/donate">Donate</MobileNavLink>
+              <MobileNavGroup title={t("navigation.about")} links={aboutLinks} />
+              <MobileNavLink href="/events">{t("navigation.events")}</MobileNavLink>
+              <MobileNavLink href="/programs">{t("navigation.programs")}</MobileNavLink>
+              <MobileNavLink href="/archives/gallery">{t("navigation.gallery")}</MobileNavLink>
+              <MobileNavGroup title={t("navigation.supportUs")} links={supportLinks} />
+              <MobileNavGroup title={t("navigation.resources")} links={resourcesLinks} />
+              <MobileNavLink href="/contact">{t("navigation.contact")}</MobileNavLink>
+              <MobileNavLink href="/donate">{t("common.donate")}</MobileNavLink>
             </nav>
             <div className="mt-4 pt-4 border-t border-[#800000]/30 flex flex-col gap-2">
               <a href="tel:+16135551234" className="flex items-center gap-2 text-[#800000] hover:text-[#800000]/80 py-2 font-bold">

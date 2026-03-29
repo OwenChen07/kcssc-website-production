@@ -1,0 +1,37 @@
+{
+  "common": {
+    "viewEvents": "View Events",
+    "joinCommunity": "Join Our Community",
+    "servingSince": "Serving our community since 2011",
+    "donate": "Donate",
+    "contactUs": "Contact Us"
+  },
+  "home": {
+    "title": "Kanata Chinese Seniors Support Centre",
+    "subtitle": "Enriching lives through community, culture, and care. Join us in building a supportive environment for Chinese seniors in Kanata."
+  },
+  "navigation": {
+    "about": "About",
+    "events": "Events",
+    "programs": "Programs",
+    "gallery": "Gallery",
+    "supportUs": "Support Us",
+    "resources": "Resources",
+    "contact": "Contact",
+    "missionAndVision": "Mission and Vision",
+    "missionAndVisionDesc": "Our purpose and goals for the community",
+    "history": "History",
+    "historyDesc": "How KCSSC began and grew",
+    "boardOfDirectors": "Board of Directors",
+    "boardOfDirectorsDesc": "Meet our leadership team",
+    "resourcesTitle": "Resources",
+    "resourcesDesc": "Helpful links and information for seniors",
+    "publications": "Publications",
+    "publicationsDesc": "Newsletters and documents",
+    "membershipsVolunteers": "Memberships & Volunteers",
+    "membershipsVolunteersDesc": "Join our community",
+    "fundersSponsorsPartners": "Funders, Sponsors & Partners",
+    "fundersSponsorsPartnersDesc": "Our supporters"
+  }
+}
+

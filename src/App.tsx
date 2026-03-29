@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { AuthProvider } from "@/lib/auth-context";
+import "@/lib/i18n"; // Initialize i18n
 import Index from "./pages/Index";
 import Events from "./pages/Events";
 import Programs from "./pages/Programs";
