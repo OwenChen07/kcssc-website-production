@@ -24,7 +24,7 @@ const supportOptions = [
     title: "Support Our Work",
     description: "Your generous donations help us continue providing vital programs and services to seniors.",
     cta: "Donate Now",
-    href: "/support/partners",
+    href: "/donate",
     variant: "accent" as const,
   },
 ];

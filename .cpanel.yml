@@ -1,6 +1,7 @@
+# Deployment configuration for cPanel
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/kcssc869/public_html_2/
+    - export DEPLOYPATH=/home/kcssc869/public_html_2/ 
     - /bin/rm -r $DEPLOYPATH/*
     - /bin/cp -r dist/* $DEPLOYPATH
     - /bin/cp .htaccess $DEPLOYPATH

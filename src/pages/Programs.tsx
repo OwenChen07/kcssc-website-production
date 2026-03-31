@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Users, Clock, ArrowRight, Palette, Heart, Music, BookOpen, Utensils, Dumbbell, CalendarDays, List, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Calendar } from "@/components/ui/calendar";
+import { ProgramsCalendar } from "@/components/ui/programs-calendar";
 import {
   Dialog,
   DialogContent,
@@ -27,8 +27,8 @@ const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = 
   Dumbbell,
 };
 
-const categories = ["All", "Arts & Crafts", "Health & Wellness", "Music & Dance", "Language & Learning", "Social & Dining", "Fitness Programs"];
-const ageGroups = ["All Ages", "55+", "65+"];
+const categories = ["All", "Holiday", "Health", "Arts", "Fitness", "Cooking", "Learning", "Social"];
+const ageGroups = ["All Ages", "55+", "13-18"];
 
 export default function Programs() {
   const [allPrograms, setAllPrograms] = useState<Program[]>([]);
@@ -39,6 +39,7 @@ export default function Programs() {
   const [selectedAgeGroup, setSelectedAgeGroup] = useState("All Ages");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -78,24 +79,6 @@ export default function Programs() {
   const handleDateClick = (date: Date | undefined) => {
     if (!date) return;
     setSelectedDate(date);
-    const programsForDate = getDatePrograms(date);
-    if (programsForDate.length > 0) {
-      setSelectedProgram(programsForDate[0]);
-      setIsDialogOpen(true);
-    }
-  };
-
-  // Mark dates with programs
-  const dateModifiers = {
-    hasPrograms: (date: Date) => getDatePrograms(date).length > 0,
-  };
-
-  const modifiersStyles = {
-    hasPrograms: {
-      backgroundColor: 'hsl(var(--primary) / 0.2)',
-      color: 'hsl(var(--primary))',
-      fontWeight: '600',
-    },
   };
 
   return (
@@ -205,19 +188,24 @@ export default function Programs() {
             {!isLoading && !error && viewMode === "calendar" && (
               <div className="bg-card rounded-2xl p-8 shadow-soft border border-border/50 mb-10 w-full overflow-x-auto">
                 <div className="min-w-full">
-                  <Calendar
+                  <ProgramsCalendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateClick}
-                    modifiers={dateModifiers}
-                    modifiersStyles={modifiersStyles}
+                    month={calendarMonth}
+                    onMonthChange={setCalendarMonth}
+                    programs={filteredPrograms}
+                    onProgramClick={(program) => {
+                      setSelectedProgram(program);
+                      setIsDialogOpen(true);
+                    }}
                     className="w-full"
                   />
                 </div>
                 {selectedDate && getDatePrograms(selectedDate).length > 0 && (
-                  <div className="mt-6">
+                  <div className="mt-8 pt-6 border-t">
                     <h3 className="text-lg font-semibold mb-4">
-                      Programs on {format(selectedDate, "MMMM d, yyyy")}
+                      All Programs on {format(selectedDate, "MMMM d, yyyy")}
                     </h3>
                     <div className="space-y-3">
                       {getDatePrograms(selectedDate).map((program) => {

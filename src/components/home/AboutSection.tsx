@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Users, ArrowRight } from "lucide-react";
+import { Users, ArrowRight, Loader2 } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { fetchFavouritePhotos, type Photo } from "@/lib/api-service";
 
 const features = [
   {
@@ -13,36 +14,30 @@ const features = [
   },
 ];
 
-// Sample community images for the carousel
-const communityImages = [
-  {
-    id: 1,
-    src: "/HeroPhoto.JPG",
-    alt: "Community gathering",
-    description: "Our community coming together for special events and celebrations.",
-  },
-  {
-    id: 2,
-    src: "/Compassionate.png",
-    alt: "Compassionate care",
-    description: "Providing compassionate support and care to our community members.",
-  },
-  {
-    id: 3,
-    src: "/FamilySupportAndCare.png",
-    alt: "Family support",
-    description: "Supporting families and strengthening community bonds.",
-  },
-  {
-    id: 4,
-    src: "/Library.png",
-    alt: "Library activities",
-    description: "Educational programs and library activities for all ages.",
-  },
-];
-
 export function AboutSection() {
-  const [selectedImage, setSelectedImage] = useState<typeof communityImages[0] | null>(null);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+
+  useEffect(() => {
+    const loadFavouritePhotos = async () => {
+      try {
+        setIsLoadingPhotos(true);
+        const data = await fetchFavouritePhotos();
+        const favouritePhotos = data
+          .filter((photo) => photo.favourite === true)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setPhotos(favouritePhotos);
+      } catch (error) {
+        console.error("Failed to load favourite photos for About section:", error);
+      } finally {
+        setIsLoadingPhotos(false);
+      }
+    };
+
+    loadFavouritePhotos();
+  }, []);
+
   return (
     <section className="section-padding bg-background">
       <div className="container-kcssc">
@@ -72,36 +67,46 @@ export function AboutSection() {
 
           {/* Image Carousel - Two Thirds */}
           <div className="w-full md:w-2/3 bg-card rounded-2xl p-4 shadow-soft border border-border/50 overflow-hidden relative">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full"
-            >
-              <CarouselContent>
-                {communityImages.map((image) => (
-                  <CarouselItem key={image.id}>
-                    <div 
-                      className="relative overflow-hidden rounded-xl aspect-[16/9] cursor-pointer group"
-                      onClick={() => setSelectedImage(image)}
-                    >
-                      <img
-                        src={image.src}
-                        alt={image.alt}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder.svg";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="left-2 bg-[#850221] hover:bg-[#850221]/90 text-white border-[#850221]" />
-              <CarouselNext className="right-2 bg-[#850221] hover:bg-[#850221]/90 text-white border-[#850221]" />
-            </Carousel>
+            {isLoadingPhotos ? (
+              <div className="aspect-[16/9] flex items-center justify-center rounded-xl bg-muted/30">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : photos.length === 0 ? (
+              <div className="aspect-[16/9] flex items-center justify-center rounded-xl bg-muted/30 px-6 text-center text-muted-foreground">
+                No favourite photos available yet.
+              </div>
+            ) : (
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {photos.map((photo) => (
+                    <CarouselItem key={photo.id}>
+                      <div
+                        className="relative overflow-hidden rounded-xl aspect-[16/9] cursor-pointer group"
+                        onClick={() => setSelectedPhoto(photo)}
+                      >
+                        <img
+                          src={photo.photo}
+                          alt={photo.description || photo.event}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/placeholder.svg";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-2 bg-[#850221] hover:bg-[#850221]/90 text-white border-[#850221]" />
+                <CarouselNext className="right-2 bg-[#850221] hover:bg-[#850221]/90 text-white border-[#850221]" />
+              </Carousel>
+            )}
           </div>
         </div>
 
@@ -117,22 +122,22 @@ export function AboutSection() {
       </div>
 
       {/* Lightbox Dialog */}
-      <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
+      <Dialog open={!!selectedPhoto} onOpenChange={(open) => !open && setSelectedPhoto(null)}>
         <DialogContent className="max-w-5xl w-full p-0 bg-transparent border-none">
-          {selectedImage && (
+          {selectedPhoto && (
             <div className="relative">
               <img
-                src={selectedImage.src}
-                alt={selectedImage.alt}
+                src={selectedPhoto.photo}
+                alt={selectedPhoto.description || selectedPhoto.event}
                 className="w-full h-auto max-h-[90vh] object-contain rounded-lg"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = "/placeholder.svg";
                 }}
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 rounded-b-lg">
-                <h3 className="text-white font-bold text-xl mb-1">{selectedImage.alt}</h3>
-                {selectedImage.description && (
-                  <p className="text-white/90 text-sm mt-1">{selectedImage.description}</p>
+                <h3 className="text-white font-bold text-xl mb-1">{selectedPhoto.event}</h3>
+                {selectedPhoto.description && (
+                  <p className="text-white/90 text-sm mt-1">{selectedPhoto.description}</p>
                 )}
               </div>
             </div>

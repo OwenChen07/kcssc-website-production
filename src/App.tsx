@@ -8,7 +8,9 @@ import { AuthProvider } from "@/lib/auth-context";
 import "@/lib/i18n"; // Initialize i18n
 import Index from "./pages/Index";
 import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
 import Programs from "./pages/Programs";
+import ProgramDetail from "./pages/ProgramDetail";
 import Mission from "./pages/about/Mission";
 import History from "./pages/about/History";
 import Board from "./pages/about/Board";
@@ -17,6 +19,7 @@ import GalleryYear from "./pages/archives/GalleryYear";
 import Publications from "./pages/archives/Publications";
 import Membership from "./pages/support/Membership";
 import Partners from "./pages/support/Partners";
+import Donate from "./pages/Donate";
 import Resources from "./pages/Resources";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
@@ -40,7 +43,9 @@ const App = () => (
           <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/events/:id" element={<EventDetail />} />
           <Route path="/programs" element={<Programs />} />
+          <Route path="/programs/:id" element={<ProgramDetail />} />
           <Route path="/about/mission" element={<Mission />} />
           <Route path="/about/history" element={<History />} />
           <Route path="/about/board" element={<Board />} />
@@ -49,6 +54,7 @@ const App = () => (
           <Route path="/archives/publications" element={<Publications />} />
           <Route path="/support/membership" element={<Membership />} />
           <Route path="/support/partners" element={<Partners />} />
+          <Route path="/donate" element={<Donate />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin/login" element={<AdminLogin />} />

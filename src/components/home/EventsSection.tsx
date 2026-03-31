@@ -1,38 +1,50 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Clock, ArrowRight } from "lucide-react";
+import { fetchEvents } from "@/lib/api-service";
+import { parseDate, type Event } from "@/lib/data-service";
 
-const upcomingEvents = [
-  {
-    id: 1,
-    title: "Lunar New Year Celebration",
-    date: "January 25, 2025",
-    time: "11:00 AM - 3:00 PM",
-    location: "Community Hall",
-    category: "Holiday",
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "Senior Health & Wellness Workshop",
-    date: "January 15, 2025",
-    time: "2:00 PM - 4:00 PM",
-    location: "Room 102",
-    category: "Health",
-    featured: false,
-  },
-  {
-    id: 3,
-    title: "Traditional Chinese Painting Class",
-    date: "January 18, 2025",
-    time: "10:00 AM - 12:00 PM",
-    location: "Art Room",
-    category: "Arts",
-    featured: false,
-  },
-];
+function getEventTimestamp(event: Event): number {
+  const eventDate = parseDate(event.date);
+  const midnight = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+  return midnight.getTime();
+}
 
 export function EventsSection() {
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadEvents() {
+      try {
+        const events = await fetchEvents();
+        if (isMounted) {
+          setAllEvents(events);
+        }
+      } catch (error) {
+        console.error("Failed to load upcoming events:", error);
+      }
+    }
+
+    loadEvents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const upcomingEvents = useMemo(() => {
+    const today = new Date();
+    const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+
+    return allEvents
+      .filter((event) => getEventTimestamp(event) >= todayMidnight)
+      .sort((a, b) => getEventTimestamp(a) - getEventTimestamp(b))
+      .slice(0, 3);
+  }, [allEvents]);
+
   return (
     <section className="section-padding bg-kcssc-gold-light">
       <div className="container-kcssc">

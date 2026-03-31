@@ -17,6 +17,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 export function Header() {
   const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const dropdownContentClass = "absolute left-1/2 top-full z-50 mt-2 w-auto -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-lg";
 
   const aboutLinks = [
     { title: t("navigation.missionAndVision"), href: "/about/mission", description: t("navigation.missionAndVisionDesc") },
@@ -49,11 +50,11 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <NavigationMenu className="hidden lg:flex">
+          <NavigationMenu withViewport={false} className="hidden lg:flex">
             <NavigationMenuList className="gap-1">
-              <NavigationMenuItem>
+              <NavigationMenuItem className="relative">
                 <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">{t("navigation.about")}</NavigationMenuTrigger>
-                <NavigationMenuContent>
+                <NavigationMenuContent className={dropdownContentClass}>
                   <ul className="grid w-[400px] gap-3 p-4">
                     {aboutLinks.map((link) => (
                       <ListItem key={link.href} title={link.title} href={link.href}>
@@ -88,9 +89,9 @@ export function Header() {
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
-              <NavigationMenuItem>
+              <NavigationMenuItem className="relative">
                 <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">{t("navigation.supportUs")}</NavigationMenuTrigger>
-                <NavigationMenuContent>
+                <NavigationMenuContent className={dropdownContentClass}>
                   <ul className="grid w-[400px] gap-3 p-4">
                     {supportLinks.map((link) => (
                       <ListItem key={link.href} title={link.title} href={link.href}>
@@ -101,9 +102,9 @@ export function Header() {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
-              <NavigationMenuItem>
+              <NavigationMenuItem className="relative">
                 <NavigationMenuTrigger className="text-base font-bold h-12 px-4 text-[#800000] bg-transparent hover:bg-[#800000]/10 hover:text-[#800000] data-[state=open]:bg-[#800000]/10 data-[active]:bg-[#800000]/20">{t("navigation.resources")}</NavigationMenuTrigger>
-                <NavigationMenuContent>
+                <NavigationMenuContent className={dropdownContentClass}>
                   <ul className="grid w-[400px] gap-3 p-4">
                     {resourcesLinks.map((link) => (
                       <ListItem key={link.href} title={link.title} href={link.href}>

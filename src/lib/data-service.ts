@@ -19,6 +19,8 @@ export interface Program {
   category: string;
   icon: string;
   schedule: string; // e.g., "Tuesdays, 10:00 AM - 12:00 PM" or "Mon/Wed/Fri, 9:00 AM - 10:00 AM"
+  start_date: string; // ISO date string (YYYY-MM-DD)
+  end_date: string; // ISO date string (YYYY-MM-DD)
   ageGroup: string;
   description: string;
   spots: string;

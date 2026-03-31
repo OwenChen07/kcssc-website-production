@@ -10,7 +10,6 @@ const SUPABASE_ENABLED = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env
 // Import mock API functions as fallback
 import { fetchEvents as fetchMockEvents, fetchEventById as fetchMockEventById } from './mock-api';
 
-// Cache configuration
 interface CacheEntry<T> {
   data: T;
   timestamp: number;
@@ -133,6 +132,8 @@ function transformProgramRow(row: any): Program {
     category: row.category,
     icon: row.icon,
     schedule: row.schedule,
+    start_date: row.start_date || '',
+    end_date: row.end_date || '',
     ageGroup: row.age_group,
     description: row.description || '',
     spots: row.spots || '',
@@ -147,6 +148,8 @@ function transformProgramToRow(program: Partial<Program>): any {
   if (program.category !== undefined) row.category = program.category;
   if (program.icon !== undefined) row.icon = program.icon;
   if (program.schedule !== undefined) row.schedule = program.schedule;
+  if (program.start_date !== undefined) row.start_date = program.start_date;
+  if (program.end_date !== undefined) row.end_date = program.end_date;
   if (program.ageGroup !== undefined) row.age_group = program.ageGroup;
   if (program.description !== undefined) row.description = program.description;
   if (program.spots !== undefined) row.spots = program.spots || null;
@@ -688,14 +691,16 @@ export async function fetchFavouritePhotos(): Promise<Photo[]> {
 
     if (error) throw error;
 
-    return (data || []).map((row: any) => ({
+    return (data || [])
+      .map((row: any) => ({
       id: row.id,
       photo: row.photo,
       description: row.description || undefined,
       event: row.event,
       date: row.date ? new Date(row.date).toISOString().split('T')[0] : '',
       favourite: row.favourite || false,
-    }));
+    }))
+      .filter((photo) => photo.favourite === true);
   } catch (error) {
     console.error('Failed to fetch favourite photos from Supabase:', error);
     return [];

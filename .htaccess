@@ -1,3 +1,5 @@
+<!-- Client-side routing for single-page applications -->
+<!-- This file tells Apache to serve index.html instead, letting React's router handle the URL. -->
 <IfModule mod_rewrite.c>
 
   RewriteEngine On

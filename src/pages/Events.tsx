@@ -27,9 +27,8 @@ export default function Events() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [viewMode, setViewMode] = useState<"list" | "calendar">("calendar"); // Default to calendar view
-  // Default to January 2025 where most events are
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date(2025, 0, 15));
-  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date(2025, 0, 1)); // January 2025
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 

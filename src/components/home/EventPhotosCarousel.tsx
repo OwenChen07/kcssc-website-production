@@ -18,8 +18,9 @@ export function EventPhotosCarousel() {
     try {
       setIsLoading(true);
       const data = await fetchFavouritePhotos();
+      const favouritePhotos = data.filter((photo) => photo.favourite === true);
       // Limit to 6 most recent photos
-      const sorted = data
+      const sorted = favouritePhotos
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 6);
       setPhotos(sorted);
